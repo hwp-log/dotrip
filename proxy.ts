@@ -47,6 +47,16 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    {
+      source:
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+      // prefetch 요청은 proxy를 건너뛴다 — RSC prefetch마다 getUser(Auth 서버 왕복)가 쌓이는 걸
+      // 막는다. 일반 요청·네비게이션·Server Action(next-action 헤더, prefetch 헤더 없음)은 그대로
+      // 매칭되어 세션 쿠키 갱신(getUser)을 유지한다. (Next proxy 공식 예시)
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
+    },
   ],
 }
