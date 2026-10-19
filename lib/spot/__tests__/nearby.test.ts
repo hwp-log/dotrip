@@ -4,11 +4,11 @@ import { findNearbySpots } from '../nearby';
 // geo.ts(haversine·boundingBox)는 실함수 사용 — prisma.findMany는 고정 rows를 반환(where 무시)하고,
 // clamp된 반경이 이후 JS 거리 필터(distanceM<=r)에 미치는 영향을 반환 개수로 판정한다.
 
-const mockGetUser = jest.fn();
+const mockGetClaims = jest.fn();
 const mockFindMany = jest.fn();
 
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(() => Promise.resolve({ auth: { getUser: mockGetUser } })),
+  createClient: jest.fn(() => Promise.resolve({ auth: { getClaims: mockGetClaims } })),
 }));
 jest.mock('@/lib/prisma', () => ({
   prisma: { spot: { findMany: (...a: unknown[]) => mockFindMany(...a) } },
@@ -28,13 +28,13 @@ const ROWS = [row('near', 90), row('mid', 300), row('far', 600)];
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } });
+  mockGetClaims.mockResolvedValue({ data: { claims: { sub: 'user-1' } } });
   mockFindMany.mockResolvedValue(ROWS);
 });
 
 describe('findNearbySpots — 인증 가드', () => {
   it('미인증(user=null)이면 throw하고 prisma를 조회하지 않는다', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
+    mockGetClaims.mockResolvedValueOnce({ data: null });
     await expect(findNearbySpots(BASE.lat, BASE.lng)).rejects.toThrow('UNAUTHENTICATED');
     expect(mockFindMany).not.toHaveBeenCalled();
   });

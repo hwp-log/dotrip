@@ -21,7 +21,7 @@ const mockFrom        = jest.fn(() => ({
   update: mockUpdate,
   delete: mockDelete,
 }));
-const mockGetUser     = jest.fn();
+const mockGetClaims     = jest.fn();
 const mockRpc         = jest.fn();
 jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
@@ -32,7 +32,7 @@ const mockRevalidatePath = jest.requireMock('next/cache').revalidatePath;
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(() =>
     Promise.resolve({
-      auth: { getUser: mockGetUser },
+      auth: { getClaims: mockGetClaims },
       from: mockFrom,
       rpc: mockRpc,
     })
@@ -52,7 +52,7 @@ describe('createTilEntry', () => {
       created_at: '2026-05-11T00:00:00Z',
     };
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } }, error: null });
     mockSingle.mockResolvedValueOnce({ data: mockEntry, error: null });
 
     const result = await createTilEntry('Learned TDD today', 'Red Green Refactor cycle is powerful');
@@ -65,19 +65,19 @@ describe('createTilEntry', () => {
     const result = await createTilEntry('', 'Some content');
 
     expect(result).toEqual({ error: '제목을 입력해주세요' });
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockGetClaims).not.toHaveBeenCalled();
   });
 
   it('should return error when content is empty', async () => {
     const result = await createTilEntry('Some title', '');
 
     expect(result).toEqual({ error: '내용을 입력해주세요' });
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockGetClaims).not.toHaveBeenCalled();
   });
 
   // Cycle 2 — 인증 가드
   it('should return error when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+    mockGetClaims.mockResolvedValueOnce({ data: null, error: null });
 
     const result = await createTilEntry('Some title', 'Some content');
 
@@ -89,7 +89,7 @@ describe('createTilEntry', () => {
   it('should return friendly error when DB insert fails', async () => {
     const mockUser = { id: 'user-123' };
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } }, error: null });
     mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
     const result = await createTilEntry('Some title', 'Some content');
@@ -107,7 +107,7 @@ describe('getTilEntries', () => {
       { id: 'e2', user_id: 'user-123', title: 'T2', content: 'C2', created_at: '2026-05-11T00:00:00Z' },
     ];
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } } });
     mockOrder.mockResolvedValueOnce({ data: mockEntries, error: null });
 
     const result = await getTilEntries();
@@ -119,7 +119,7 @@ describe('getTilEntries', () => {
 
   // Cycle 2 — 인증 가드
   it('should return error when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
+    mockGetClaims.mockResolvedValueOnce({ data: null });
 
     const result = await getTilEntries();
 
@@ -131,7 +131,7 @@ describe('getTilEntries', () => {
   it('should return friendly error when DB query fails', async () => {
     const mockUser = { id: 'user-123' };
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } } });
     mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
     const result = await getTilEntries();
@@ -143,7 +143,7 @@ describe('getTilEntries', () => {
 describe('getTilStreak', () => {
   // Cycle 1 — 정상 조회
   it('should return currentStreak and bestStreak', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: 'user-123' } } });
     mockRpc.mockResolvedValueOnce({ data: [{ current_streak: 3, best_streak: 7 }], error: null });
 
     const result = await getTilStreak();
@@ -154,7 +154,7 @@ describe('getTilStreak', () => {
 
   // Cycle 2 — 인증 가드
   it('should return error when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
+    mockGetClaims.mockResolvedValueOnce({ data: null });
 
     const result = await getTilStreak();
 
@@ -164,7 +164,7 @@ describe('getTilStreak', () => {
 
   // Cycle 1.5 — DB 에러
   it('should return friendly error when RPC fails', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: 'user-123' } } });
     mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
     const result = await getTilStreak();
@@ -185,7 +185,7 @@ describe('getTilEntry', () => {
       created_at: '2026-05-11T00:00:00Z',
     };
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } } });
     mockSingle.mockResolvedValueOnce({ data: mockEntry, error: null });
 
     const result = await getTilEntry('entry-uuid-1');
@@ -197,7 +197,7 @@ describe('getTilEntry', () => {
 
   // Cycle 2 — 인증 가드
   it('should return error when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
+    mockGetClaims.mockResolvedValueOnce({ data: null });
 
     const result = await getTilEntry('entry-uuid-1');
 
@@ -207,7 +207,7 @@ describe('getTilEntry', () => {
 
   // Cycle 1.5 — not found (data null, 타인 항목 포함)
   it('should return error when entry is not found', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: 'user-123' } } });
     mockSingle.mockResolvedValueOnce({ data: null, error: null });
 
     const result = await getTilEntry('other-uuid');
@@ -217,7 +217,7 @@ describe('getTilEntry', () => {
 
   // Cycle 1.5 — DB 에러
   it('should return friendly error when DB query fails', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: 'user-123' } } });
     mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
     const result = await getTilEntry('entry-uuid-1');
@@ -232,19 +232,19 @@ describe('updateTilEntry', () => {
     const result = await updateTilEntry('entry-uuid-1', '', 'Some content');
 
     expect(result).toEqual({ error: '제목을 입력해주세요' });
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockGetClaims).not.toHaveBeenCalled();
   });
 
   it('should return error when content is empty', async () => {
     const result = await updateTilEntry('entry-uuid-1', 'Some title', '');
 
     expect(result).toEqual({ error: '내용을 입력해주세요' });
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockGetClaims).not.toHaveBeenCalled();
   });
 
   // Cycle 2 — 인증 가드
   it('should return error when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
+    mockGetClaims.mockResolvedValueOnce({ data: null });
 
     const result = await updateTilEntry('entry-uuid-1', 'Some title', 'Some content');
 
@@ -263,7 +263,7 @@ describe('updateTilEntry', () => {
       created_at: '2026-05-11T00:00:00Z',
     };
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } } });
     mockUpdateSingle.mockResolvedValueOnce({ data: mockEntry, error: null });
 
     const result = await updateTilEntry('entry-uuid-1', 'Updated title', 'Updated content');
@@ -280,7 +280,7 @@ describe('updateTilEntry', () => {
   it('should return friendly error when DB update fails', async () => {
     const mockUser = { id: 'user-123' };
 
-    mockGetUser.mockResolvedValueOnce({ data: { user: mockUser } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: mockUser.id } } });
     mockUpdateSingle.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
     const result = await updateTilEntry('entry-uuid-1', 'Some title', 'Some content');
@@ -292,7 +292,7 @@ describe('updateTilEntry', () => {
 describe('deleteTilEntry', () => {
   // Cycle 2 — 인증 가드
   it('should return error when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
+    mockGetClaims.mockResolvedValueOnce({ data: null });
 
     const result = await deleteTilEntry('entry-uuid-1');
 
@@ -302,7 +302,7 @@ describe('deleteTilEntry', () => {
 
   // Cycle 1 — 정상 삭제
   it('should delete entry and revalidate path', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: 'user-123' } } });
     mockDeleteEq2.mockResolvedValueOnce({ data: null, error: null });
 
     const result = await deleteTilEntry('entry-uuid-1');
@@ -315,7 +315,7 @@ describe('deleteTilEntry', () => {
 
   // Cycle 1.5 — DB 에러
   it('should return friendly error when DB delete fails', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'user-123' } } });
+    mockGetClaims.mockResolvedValueOnce({ data: { claims: { sub: 'user-123' } } });
     mockDeleteEq2.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
     const result = await deleteTilEntry('entry-uuid-1');
