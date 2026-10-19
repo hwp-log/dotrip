@@ -1,6 +1,7 @@
 'use server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { haversineM, boundingBox } from './geo';
 
 // S3-a: 마커 좌표 반경 내 기존 Spot 후보 (중복 스팟 재사용용). 좌표만으로 후보 선정 —
@@ -31,7 +32,7 @@ export async function findNearbySpots(
   // 0384 인증 가드(throw 가드형, requireAdmin 선례) — prisma는 RLS 우회라 앱 레벨이 유일 통제.
   // 쿼리보다 먼저 = 미인증이면 조회 도달 전 차단. 인증만(role 불검사 — 글 작성자 누구나 근처 후보 정당).
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error('UNAUTHENTICATED');
 
   // 0384 상한 clamp(silent, 단일 소스). Number.isFinite 필수 — Math.max(0,NaN)=NaN,

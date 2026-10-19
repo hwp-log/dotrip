@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { fetchPublicPlans } from '@/lib/plan/queries';
 import { PlanListClient } from '../_components/PlanListClient';
 import { PlanFinderHeader } from '../_components/PlanFinderHeader';
 
 export default async function PlanFinderPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   const plans = await fetchPublicPlans(user?.id);
 
   return (

@@ -1,5 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 
 export async function createTilEntry(title: string, content: string) {
   if (title.trim() === '') {
@@ -10,7 +11,7 @@ export async function createTilEntry(title: string, content: string) {
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     return { error: '로그인이 필요합니다' };
@@ -31,7 +32,7 @@ export async function createTilEntry(title: string, content: string) {
 
 export async function getTilEntries() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     return { error: '로그인이 필요합니다' };
@@ -52,7 +53,7 @@ export async function getTilEntries() {
 
 export async function getTilEntry(id: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     return { error: '로그인이 필요합니다' };
@@ -81,7 +82,7 @@ export async function updateTilEntry(id: string, title: string, content: string)
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     return { error: '로그인이 필요합니다' };
@@ -106,7 +107,7 @@ export async function updateTilEntry(id: string, title: string, content: string)
 
 export async function deleteTilEntry(id: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     return { error: '로그인이 필요합니다' };
@@ -128,7 +129,7 @@ export async function deleteTilEntry(id: string) {
 
 export async function getTilStreak() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     return { error: '로그인이 필요합니다' };

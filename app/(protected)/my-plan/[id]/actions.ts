@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 
 export async function togglePlanPublicAction(
@@ -9,7 +10,7 @@ export async function togglePlanPublicAction(
   isPublic: boolean,
 ): Promise<void> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const plan = await prisma.myPlan.findFirst({

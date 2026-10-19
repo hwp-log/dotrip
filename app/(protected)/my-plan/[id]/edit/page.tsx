@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { resolvePlanDayCount } from '@/lib/plan/day-count';
 import type { MyPlan, PlanSpot, PlanCost, PlanFlight } from '@prisma/client';
@@ -108,7 +109,7 @@ export default async function MyPlanEditPage({ params }: Props) {
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const plan = await prisma.myPlan.findFirst({

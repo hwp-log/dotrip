@@ -1,5 +1,6 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { reverseGeocode } from './reverseGeocode';
 import { findNearestTransit } from './autoTransit';
 
@@ -25,7 +26,7 @@ export async function getSpotMeta(
   // 0384 throw 가드형 — 외부 API를 태우는 액션이라 미인증 호출은 쿼터 소진 경로. 조회 전 차단.
   // (nearby.ts와 동일 계약: 'UNAUTHENTICATED' throw. 공용 requireUser 추출은 후속 리팩터로 보류)
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error('UNAUTHENTICATED');
 
   // 좌표 검증 — 0384 Number.isFinite 교훈. 비유한·범위 밖은 clamp가 무의미(좌표라) → 거부(전 필드 null).

@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { extractStoragePath, resolvePhotoIntent } from '@/lib/story/photo-cleanup';
@@ -37,7 +38,7 @@ async function findSharedOwnedSpotIds(
 
 export async function updateStoryAction(storyId: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const story = await prisma.story.findUnique({ where: { id: storyId } });
@@ -354,7 +355,7 @@ export async function updateStoryAction(storyId: string, _prevState: ActionState
 
 export async function toggleLikeAction(storyId: string): Promise<{ liked: boolean; count: number }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error('로그인이 필요합니다');
 
   // 미존재 storyId 사전 가드 — like.create의 FK 에러(P2003) 500 방지 (사전 조회 가드 선례)
@@ -393,7 +394,7 @@ export async function toggleLikeAction(storyId: string): Promise<{ liked: boolea
 // 같은 액션을 공유하되 돌아갈 곳만 다르다. 검증·삭제 로직은 무변.
 export async function deleteStoryAction(storyId: string, redirectTo: string = '/story'): Promise<void> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const story = await prisma.story.findUnique({ where: { id: storyId } });

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { AppHeader } from '@/app/(protected)/_components/AppHeader';
 import { BottomTabBar } from '@/app/(protected)/_components/BottomTabBar';
@@ -8,7 +9,7 @@ import { Footer } from '@/app/(protected)/_components/Footer';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   const profile = user
     ? await prisma.user.findUnique({
         where: { id: user.id },

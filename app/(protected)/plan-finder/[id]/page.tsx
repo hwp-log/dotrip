@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { summarizePlanCost } from '@/lib/plan/summarize-plan-cost';
 import { visiblePlanWhere } from '@/lib/plan/queries';
 import { resolvePlanDayCount } from '@/lib/plan/day-count';
@@ -19,7 +20,7 @@ export default async function PlanFinderDetailPage({ params }: Props) {
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   // 0557: 공개이거나 내 것 — 남의 비공개는 404 유지, 소유자는 자기 비공개도 열람(가시성 정본: visiblePlanWhere)
   const plan = await prisma.myPlan.findFirst({

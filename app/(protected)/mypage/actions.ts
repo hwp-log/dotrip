@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { prisma } from '@/lib/prisma';
 
@@ -13,7 +14,7 @@ export async function updatePasswordAction(
   if (newPassword.length < 8) return { error: '비밀번호는 8자 이상이어야 합니다' };
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { error: '로그인이 필요합니다' };
 
   const { error } = await supabase.auth.updateUser({
@@ -35,7 +36,7 @@ export async function updateNicknameAction(
   nickname: string,
 ): Promise<{ error: string } | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { error: '로그인이 필요합니다' };
 
   const trimmed = nickname.trim();
@@ -64,7 +65,7 @@ export async function updateAvatarAction(
   newUrl: string,
 ): Promise<{ error: string } | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { error: '로그인이 필요합니다' };
 
   if (!extractAvatarPath(newUrl, user.id)) {
@@ -102,7 +103,7 @@ function buildAnonymizedFields(userId: string) {
 
 export async function removeAvatarAction(): Promise<{ error: string } | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { error: '로그인이 필요합니다' };
 
   const current = await prisma.user.findUnique({

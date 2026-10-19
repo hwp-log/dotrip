@@ -1,5 +1,6 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 
 // 키워드 장소 검색 — Kakao Local REST(keyword.json). 지도 SDK는 Naver로 이식했지만
 // 장소 검색은 카카오 REST 유지(autoTransit.ts 선례·기존 KAKAO_REST_API_KEY 재사용).
@@ -33,7 +34,7 @@ export async function searchPlaces(keyword: string): Promise<SearchPlacesResult>
   // 공개 엔드포인트 노출 방어 — 미인증 호출로 Kakao 쿼터 소진 방지 (til/actions 값 반환형 패턴).
   // 사유 미노출: 기존 3상태 유지, error로 수렴 (글쓰기 화면 자체가 로그인 필수라 정상 사용자 무영향)
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { status: 'error' };
 
   const key = process.env.KAKAO_REST_API_KEY;

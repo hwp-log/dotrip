@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { StoryWriteForm } from './StoryWriteForm';
 import { createStoryAction } from './actions';
@@ -8,7 +9,7 @@ import { buildPlanSummaryLine } from '@/lib/plan/summary-line';
 
 export default async function StoryNewPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const plans = await prisma.myPlan.findMany({

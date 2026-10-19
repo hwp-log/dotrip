@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { MapPin, PenSquare } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { fetchStoriesWithMeta, fetchMyStoryTags, mapStoryToCard, fetchLikedStoryIds, STORY_PAGE_SIZE } from '@/lib/story/queries';
 import { getAvatarInfo } from '@/lib/avatar/generate';
@@ -15,7 +16,7 @@ export default async function MyStoryPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const profile = await prisma.user.findUnique({

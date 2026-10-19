@@ -1,5 +1,6 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { searchMovies, findMovieByNormalizedTitle } from '@/lib/movie/queries';
 import type { MovieSuggestion } from '@/lib/movie/queries';
@@ -12,7 +13,7 @@ type SubmitResult = { movie: { id: string; title: string } } | { error: string }
 
 export async function submitMovie(title: string): Promise<SubmitResult> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { error: '로그인이 필요합니다' };
 
   const trimmed = title.trim();

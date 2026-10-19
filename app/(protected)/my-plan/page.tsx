@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Map, Plus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { calcPlanTotal } from '@/lib/plan/calc-plan-total';
 import { getAvatarInfo } from '@/lib/avatar/generate';
@@ -9,7 +10,7 @@ import { MyPlanListClient, type MyPlanListItem } from './_components/MyPlanListC
 
 export default async function MyPlanPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const profile = await prisma.user.findUnique({

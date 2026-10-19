@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { StoryWriteForm } from '@/app/(protected)/story/new/StoryWriteForm';
 import { updateStoryAction } from '../actions';
@@ -27,7 +28,7 @@ export default async function StoryEditPage({ params }: { params: Promise<{ id: 
   if (!story) notFound();
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user || user.id !== story.userId) redirect(`/story/${id}`);
 
   const plans = await prisma.myPlan.findMany({

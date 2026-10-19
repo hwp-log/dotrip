@@ -3,6 +3,7 @@ import Image from 'next/image';
 import type { LocalSpot } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { DeleteButton } from './DeleteButton';
 import { LikeButton } from './LikeButton';
@@ -17,7 +18,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  const currentUser = await getAuthUser(supabase);
 
   const [story, myLike] = await Promise.all([
     prisma.story.findUnique({

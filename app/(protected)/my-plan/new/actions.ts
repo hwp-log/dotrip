@@ -1,6 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import type { Currency, CostCategory, TripType, Prisma } from '@prisma/client';
 import { searchFlights } from '@/lib/flights';
@@ -249,7 +250,7 @@ export async function createPlanWithItemsAction(
   payload: SavePayload,
 ): Promise<{ error: string } | undefined> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const title = payload.title.trim();
@@ -307,7 +308,7 @@ export async function updatePlanWithItemsAction(
   payload: SavePayload,
 ): Promise<{ error: string } | undefined> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const title = payload.title.trim();
@@ -390,7 +391,7 @@ export async function searchFlightsAction(params: {
   returnDate?: string;
 }): Promise<{ offers: FlightOffer[] } | { error: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { error: '로그인이 필요합니다' };
 
   try {

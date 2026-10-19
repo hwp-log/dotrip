@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { calcPlanTotal } from '@/lib/plan/calc-plan-total';
 import { AvatarPreviewProvider } from './AvatarContext';
@@ -13,7 +14,7 @@ import { RecentActivityCard } from './RecentActivityCard';
 
 export default async function MyPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const [profile, storyCount, planCount, likeCount, plansForAvg, recentStories, recentPlans] = await Promise.all([

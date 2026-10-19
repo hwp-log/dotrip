@@ -1,6 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { findNearestTransit } from '@/lib/spot/autoTransit';
@@ -18,7 +19,7 @@ type ActionState = { error: string } | null;
 
 export async function createStoryAction(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect('/login');
 
   const title = formData.get('title')?.toString().trim() ?? '';

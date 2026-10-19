@@ -3,12 +3,13 @@ import { visiblePlanWhere } from '@/lib/plan/queries';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth/guard';
 import { prisma } from '@/lib/prisma';
 import { PLAN_COPY_PRICE } from '@/lib/payment/price';
 
 export async function togglePlanLikeAction(planId: string): Promise<{ liked: boolean; count: number }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error('로그인이 필요합니다');
 
   // 0557: 공개이거나 내 것(visiblePlanWhere) — 페이지·copyPublicPlanAction과 동일 게이트.
@@ -60,7 +61,7 @@ export async function copyPublicPlanAction(
   planId: string,
 ): Promise<CopyPublicPlanResult> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { unauthenticated: true };
 
   // 0557: 공개이거나 내 것 — 자기 비공개 담기는 무해(버튼은 isOwner 숨김, 방어만 공유)
@@ -192,7 +193,7 @@ export async function createPlanCopyOrderAction(
   sourcePlanId: string,
 ): Promise<CreatePlanOrderResult> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) return { unauthenticated: true };
 
   // copyPublicPlanAction과 **같은 게이트**(visiblePlanWhere) — 담을 수 없는 플랜에
